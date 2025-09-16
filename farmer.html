@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Farmer Dashboard - AyurTrace</title>
+	<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+	<div class="topbar">
+		<div class="brand">AyurTrace</div>
+		<div class="navlinks">
+			<a href="dashboard.html">Dashboard</a>
+			<a href="farmer.html">Farmer</a>
+			<a href="lab.html">Lab</a>
+			<a href="verify.html">Verify Status</a>
+		</div>
+	</div>
+	<div class="wrapper">
+		<div class="hero">
+			<div class="inner">
+				<h2>Farmer Profile</h2>
+				<p>View grower identity, farm geo-coordinates, certifications, and latest collection events.</p>
+			</div>
+		</div>
+
+		<div class="grid">
+			<div class="card">
+				<h3>Identity</h3>
+				<div class="info-grid">
+					<div class="info-item"><b>Name</b><span id="farmerName">-</span></div>
+					<div class="info-item"><b>Cooperative</b><span id="coop">Green Hills Co-op</span></div>
+					<div class="info-item"><b>Farmer ID</b><span id="farmerId">FRM-ASH-1023</span></div>
+					<div class="info-item"><b>Certifications</b><span id="certs">GACP, Fair-Trade</span></div>
+				</div>
+			</div>
+			<div class="card">
+				<h3>Farm Location</h3>
+				<div class="info-grid">
+					<div class="info-item"><b>Coordinates</b><span id="coords">23.456789, 77.123456</span></div>
+					<div class="info-item"><b>Village</b><span id="village">Sehore</span></div>
+					<div class="info-item"><b>State</b><span id="state">Madhya Pradesh</span></div>
+				</div>
+				<div id="map" style="margin-top:12px; height:300px; border-radius:12px; border:1px solid var(--border)"></div>
+			</div>
+		</div>
+
+		<div class="card meta">
+			<h3>Recent Collection Events</h3>
+			<pre id="events">No events yet</pre>
+		</div>
+	</div>
+
+	<script>
+	(function init() {
+		const summaryRaw = localStorage.getItem('farmerSummary');
+		const userName = localStorage.getItem('userName') || '-';
+		document.getElementById('farmerName').textContent = userName;
+		if (!summaryRaw) return;
+		try {
+			const summary = JSON.parse(summaryRaw);
+			if (summary.name) document.getElementById('farmerName').textContent = summary.name;
+			if (summary.coords && summary.coords.lat != null && summary.coords.lon != null) {
+				document.getElementById('coords').textContent = `${summary.coords.lat.toFixed(6)}, ${summary.coords.lon.toFixed(6)}`;
+				const lat = summary.coords.lat, lon = summary.coords.lon;
+				document.getElementById('map').innerHTML = `<iframe title="map" width="100%" height="300" style="border:0;border-radius:12px;" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01}%2C${lat-0.01}%2C${lon+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lon}"></iframe>`;
+			}
+			function fmt(dt){ try { return new Date(dt).toLocaleString(); } catch { return dt || 'unknown'; } }
+			const evt = { date: fmt(summary.capturedAt), species: 'Captured image', location: summary.coords || null };
+			document.getElementById('events').textContent = JSON.stringify([evt], null, 2);
+			// Also reflect captured time under Identity
+			const capDiv = document.createElement('div');
+			capDiv.className = 'info-item';
+			capDiv.innerHTML = '<b>Last Capture</b><span>' + (fmt(summary.capturedAt)) + '</span>';
+			document.querySelector('.card .info-grid').appendChild(capDiv);
+		} catch {}
+	})();
+	</script>
+</body>
+</html> 

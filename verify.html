@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Verify Status - AyurTrace</title>
+	<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+	<div class="topbar">
+		<div class="brand">AyurTrace</div>
+		<div class="navlinks">
+			<a href="dashboard.html">Dashboard</a>
+			<a href="farmer.html">Farmer</a>
+			<a href="lab.html">Lab</a>
+			<a href="verify.html">Verify Status</a>
+		</div>
+	</div>
+	<div class="wrapper">
+		<div class="hero">
+			<div class="inner">
+				<h2>Status Verification</h2>
+				<p>Enter Batch ID or scan a QR to verify provenance and compliance.</p>
+			</div>
+		</div>
+
+		<div class="card">
+			<h3>Check Status</h3>
+			<div class="row">
+				<div class="half">
+					<label for="batch">Batch / QR ID</label>
+					<input id="batch" placeholder="e.g., ASH-2025-0901" />
+				</div>
+				<div class="half" style="align-self:flex-end;">
+					<button id="checkBtn">Verify</button>
+				</div>
+			</div>
+			<div class="meta" style="margin-top:12px;">
+				<pre id="statusBox">No query</pre>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	document.getElementById('checkBtn').addEventListener('click', () => {
+		const id = document.getElementById('batch').value.trim();
+		if (!id) { document.getElementById('statusBox').textContent = 'Please enter an ID'; return; }
+		// Mocked response; in a full solution, fetch from API / blockchain gateway
+		const response = {
+			ok: true,
+			id,
+			status: 'Verified',
+			provenance: {
+				species: 'Withania somnifera',
+				collectedAt: '2025-09-12T07:45:00Z',
+				farmerId: 'FRM-ASH-1023',
+				labReportId: 'LAB-IND-2217/ASH-2025-0901'
+			}
+		};
+		document.getElementById('statusBox').textContent = JSON.stringify(response, null, 2);
+	});
+	</script>
+</body>
+</html> 

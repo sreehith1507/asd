@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Lab Dashboard - AyurTrace</title>
+	<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+	<div class="topbar">
+		<div class="brand">AyurTrace</div>
+		<div class="navlinks">
+			<a href="dashboard.html">Dashboard</a>
+			<a href="farmer.html">Farmer</a>
+			<a href="lab.html">Lab</a>
+			<a href="verify.html">Verify Status</a>
+		</div>
+	</div>
+	<div class="wrapper">
+		<div class="hero">
+			<div class="inner">
+				<h2>Laboratory</h2>
+				<p>View QA/QC results for batches, including moisture, pesticide, and DNA barcoding.</p>
+			</div>
+		</div>
+
+		<div class="grid">
+			<div class="card">
+				<h3>Lab Identity</h3>
+				<div class="info-grid">
+					<div class="info-item"><b>Name</b><span>Swasthya Labs</span></div>
+					<div class="info-item"><b>Accreditation</b><span>NABL ISO/IEC 17025</span></div>
+					<div class="info-item"><b>Lab ID</b><span>LAB-IND-2217</span></div>
+					<div class="info-item"><b>Contact</b><span>support@swasthyalabs.example</span></div>
+				</div>
+			</div>
+			<div class="card">
+				<h3>Recent Test Results</h3>
+				<pre id="tests">[
+{
+	"batchId": "ASH-2025-0901",
+	"moisturePct": 9.6,
+	"pesticides": "Below LOQ",
+	"dnaBarcode": "Withania somnifera confirmed",
+	"testedAt": "2025-09-14T10:30:00Z"
+}
+]</pre>
+			</div>
+		</div>
+	</div>
+</body>
+</html> 

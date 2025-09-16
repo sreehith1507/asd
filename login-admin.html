@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Admin Login - AyurTrace</title>
+	<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+	<div class="container">
+		<h1>AyurTrace</h1>
+		<h2>Admin Login</h2>
+		<form id="loginForm">
+			<label>Username</label>
+			<input type="text" name="username" value="admin" required />
+			<label>Password</label>
+			<input type="password" name="password" value="admin123" required />
+			<button type="submit">Login</button>
+		</form>
+		<p>
+			Are you collector? <a href="login.html">Go to Collector Login</a>
+		</p>
+		<div id="error" class="error"></div>
+	</div>
+	<script>
+	const form = document.getElementById('loginForm');
+	form.addEventListener('submit', (e) => {
+		e.preventDefault();
+		const formData = new FormData(form);
+		const username = formData.get('username');
+		const password = formData.get('password');
+		if (username === 'admin' && password === 'admin123') {
+			localStorage.setItem('userRole', 'admin');
+			localStorage.setItem('userName', username);
+			window.location.href = 'dashboard.html';
+		} else {
+			document.getElementById('error').textContent = 'Invalid credentials';
+		}
+	});
+	</script>
+</body>
+</html> 

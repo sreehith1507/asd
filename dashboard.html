@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Dashboard - AyurTrace</title>
+	<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+	<div class="topbar">
+		<div class="brand">AyurTrace</div>
+		<div class="navlinks">
+			<a href="index.html">Home</a>
+			<a href="dashboard.html">Dashboard</a>
+			<a href="farmer.html">Farmer</a>
+			<a href="lab.html">Lab</a>
+			<a href="verify.html">Verify Status</a>
+		</div>
+	</div>
+	<div class="wrapper">
+		<div class="hero">
+			<div class="inner">
+				<h2>Field Scanner</h2>
+			</div>
+		</div>
+		<div class="grid">
+			<div class="card">
+				<h3>Camera Capture</h3>
+				<video id="video" autoplay playsinline style="width:100%; border-radius:8px; background:#000; min-height:220px"></video>
+				<div style="display:flex; gap:8px; margin-top:10px;">
+					<button id="startCam">Start Camera</button>
+					<button id="takePhoto">Take Photo</button>
+				</div>
+				<canvas id="canvas" style="display:none;"></canvas>
+			</div>
+			<div class="card">
+				<h3>Upload Image</h3>
+				<input type="file" id="fileInput" accept="image/*" />
+				<div class="preview" id="preview">No image</div>
+				<button id="uploadBtn">Analyze Image</button>
+				<div id="uploadMsg" class="success"></div>
+			</div>
+		</div>
+		<div class="card meta">
+			<h3>Image Information</h3>
+			<div class="info-grid">
+				<div class="info-item"><b>File Name</b><span id="fn">-</span></div>
+				<div class="info-item"><b>MIME Type</b><span id="mt">-</span></div>
+				<div class="info-item"><b>Size</b><span id="sz">-</span></div>
+				<div class="info-item"><b>Resolution</b><span id="res">-</span></div>
+				<div class="info-item"><b>Captured At</b><span id="cap">-</span></div>
+				<div class="info-item"><b>Location</b><span id="loc">-</span></div>
+			</div>
+			<div style="margin-top:12px;" class="footer-note">Full EXIF below</div>
+			<pre id="infoBox">No data</pre>
+			<div id="map" style="display:none; margin-top:12px;"></div>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/exifreader@4.24.0/dist/exif-reader.min.js"></script>
+	<script>
+	let stream;
+	let capturedBlob;
+	const video = document.getElementById('video');
+	const canvas = document.getElementById('canvas');
+	const startCam = document.getElementById('startCam');
+	const takePhoto = document.getElementById('takePhoto');
+	const fileInput = document.getElementById('fileInput');
+	const preview = document.getElementById('preview');
+	const uploadBtn = document.getElementById('uploadBtn');
+	const infoBox = document.getElementById('infoBox');
+	const fn = document.getElementById('fn');
+	const mt = document.getElementById('mt');
+	const sz = document.getElementById('sz');
+	const res = document.getElementById('res');
+	const cap = document.getElementById('cap');
+	const loc = document.getElementById('loc');
+	const mapDiv = document.getElementById('map');
+
+	startCam.addEventListener('click', async () => {
+		try {
+			stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+			video.srcObject = stream;
+		} catch (e) {
+			alert('Camera access denied or unavailable');
+		}
+	});
+
+	takePhoto.addEventListener('click', async () => {
+		if (!stream) return alert('Start camera first');
+		const track = stream.getVideoTracks()[0];
+		const settings = track.getSettings();
+		canvas.width = video.videoWidth || settings.width || 640;
+		canvas.height = video.videoHeight || settings.height || 480;
+		const ctx = canvas.getContext('2d');
+		ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+		canvas.toBlob((blob) => {
+			capturedBlob = blob;
+			const url = URL.createObjectURL(blob);
+			preview.innerHTML = '';
+			const img = new Image();
+			img.onload = () => URL.revokeObjectURL(url);
+			img.src = url;
+			img.style.maxWidth = '100%';
+			preview.appendChild(img);
+		}, 'image/jpeg', 0.92);
+	});
+
+	fileInput.addEventListener('change', () => {
+		const file = fileInput.files[0];
+		if (!file) return;
+		capturedBlob = file;
+		preview.innerHTML = '';
+		const url = URL.createObjectURL(file);
+		const img = new Image();
+		img.onload = () => URL.revokeObjectURL(url);
+		img.src = url;
+		img.style.maxWidth = '100%';
+		preview.appendChild(img);
+	});
+
+	async function parseExif(blob) {
+		try {
+			const arrayBuffer = await blob.arrayBuffer();
+			const tags = ExifReader.load(arrayBuffer);
+			return tags || {};
+		} catch (e) {
+			return {};
+		}
+	}
+
+	function degMinSecToDecimal(dms, ref) {
+		if (!Array.isArray(dms) || dms.length !== 3) return null;
+		const [d, m, s] = dms;
+		let dec = d + (m / 60) + (s / 3600);
+		if (ref === 'S' || ref === 'W') dec = -dec;
+		return dec;
+	}
+
+	function formatBytes(bytes) {
+		if (!bytes && bytes !== 0) return '-';
+		const units = ['B','KB','MB','GB'];
+		let i = 0; let v = bytes;
+		while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+		return `${v.toFixed(1)} ${units[i]}`;
+	}
+
+	function renderMiniMap(lat, lon) {
+		if (lat == null || lon == null) { mapDiv.style.display = 'none'; return; }
+		mapDiv.style.display = 'block';
+		mapDiv.innerHTML = `<iframe title="map" width="100%" height="260" style="border:0;border-radius:12px;" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01}%2C${lat-0.01}%2C${lon+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lon}"></iframe>`;
+	}
+
+	uploadBtn.addEventListener('click', async () => {
+		if (!capturedBlob) return alert('Capture or select an image first');
+		const tags = await parseExif(capturedBlob);
+		let width = null, height = null;
+		if (tags['Image Width'] && tags['Image Height']) {
+			width = tags['Image Width'].value;
+			height = tags['Image Height'].value;
+		}
+		let gpsLat = null, gpsLon = null;
+		if (tags.GPSLatitude && tags.GPSLongitude && tags.GPSLatitude.value && tags.GPSLongitude.value) {
+			const latArr = tags.GPSLatitude.value;
+			const lonArr = tags.GPSLongitude.value;
+			const latRef = tags.GPSLatitudeRef ? tags.GPSLatitudeRef.description : 'N';
+			const lonRef = tags.GPSLongitudeRef ? tags.GPSLongitudeRef.description : 'E';
+			gpsLat = degMinSecToDecimal(latArr, latRef);
+			gpsLon = degMinSecToDecimal(lonArr, lonRef);
+		}
+		function normalizeDateStr(str) {
+		if (!str) return null;
+		// EXIF often like "2025:09:12 07:45:00" → convert to ISO
+		if (/^\d{4}:\d{2}:\d{2} /.test(str)) {
+			const iso = str.replace(/^([0-9]{4}):([0-9]{2}):([0-9]{2}) /, '$1-$2-$3T') + 'Z';
+			return iso;
+		}
+		return str;
+	}
+
+	const capturedRaw = tags.DateTimeOriginal ? tags.DateTimeOriginal.description : (tags.CreateDate ? tags.CreateDate.description : null);
+	const capturedAt = normalizeDateStr(capturedRaw) || new Date().toISOString();
+		const info = {
+			ok: true,
+			info: {
+				originalName: capturedBlob.name || 'capture.jpg',
+				mimeType: capturedBlob.type || 'image/jpeg',
+				sizeBytes: capturedBlob.size,
+				width,
+				height,
+				gps: gpsLat != null && gpsLon != null ? { lat: gpsLat, lon: gpsLon } : null,
+				capturedAt
+			},
+			rawExif: tags
+		};
+
+		// Persist summary for Farmer page
+		const farmerSummary = {
+			name: localStorage.getItem('userName') || 'Collector',
+			coords: (gpsLat != null && gpsLon != null) ? { lat: gpsLat, lon: gpsLon } : null,
+			capturedAt: capturedAt || null
+		};
+		localStorage.setItem('farmerSummary', JSON.stringify(farmerSummary));
+
+		fn.textContent = info.info.originalName;
+		mt.textContent = info.info.mimeType;
+		sz.textContent = formatBytes(info.info.sizeBytes);
+		res.textContent = width && height ? `${width} × ${height}` : '-';
+		cap.textContent = capturedAt || '-';
+		loc.textContent = (gpsLat != null && gpsLon != null) ? `${gpsLat.toFixed(6)}, ${gpsLon.toFixed(6)}` : '- (no EXIF GPS)';
+		renderMiniMap(gpsLat, gpsLon);
+
+		infoBox.textContent = JSON.stringify(info, null, 2);
+		document.getElementById('uploadMsg').textContent = 'Image analyzed locally';
+
+		if ((gpsLat == null || gpsLon == null) && capturedBlob && capturedBlob.type.startsWith('image/')) {
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition((pos) => {
+					const { latitude, longitude } = pos.coords;
+					loc.textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)} (device)`;
+					renderMiniMap(latitude, longitude);
+				});
+			}
+		}
+	});
+	</script>
+	</div>
+</body>
+</html> 
