@@ -47,6 +47,67 @@
 ]</pre>
 			</div>
 		</div>
+
+		<div class="card">
+			<h3>Upload Lab Report (PDF)</h3>
+			<div class="row">
+				<div class="half">
+					<input type="file" id="pdfInput" accept="application/pdf" />
+				</div>
+				<div class="half" style="align-self:flex-end;">
+					<button id="clearPdf" class="cta secondary" style="width:auto;">Remove File</button>
+				</div>
+			</div>
+			<div class="info-grid" style="margin-top:10px;">
+				<div class="info-item"><b>File Name</b><span id="pdfName">-</span></div>
+				<div class="info-item"><b>Size</b><span id="pdfSize">-</span></div>
+			</div>
+			<div id="pdfViewer" style="margin-top:12px; height:520px; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:#0e2e1f; display:none;"></div>
+		</div>
+	</div>
+
+	<script>
+	function formatBytes(bytes) { const u=['B','KB','MB','GB']; let i=0,v=bytes; while(v>=1024 && i<u.length-1){v/=1024;i++;} return `${v.toFixed(1)} ${u[i]}`; }
+	document.getElementById('pdfInput').addEventListener('change', () => {
+		const f = document.getElementById('pdfInput').files[0];
+		if (!f) return;
+		document.getElementById('pdfName').textContent = f.name;
+		document.getElementById('pdfSize').textContent = formatBytes(f.size);
+		const url = URL.createObjectURL(f);
+		const viewer = document.getElementById('pdfViewer');
+		viewer.style.display = 'block';
+		viewer.innerHTML = `<iframe title=\"pdf\" src=\"${url}#view=FitH\" width=\"100%\" height=\"100%\" style=\"border:0\"></iframe>`;
+		localStorage.setItem('labPdfName', f.name);
+		localStorage.setItem('labPdfSize', f.size.toString());
+		localStorage.setItem('labPdfUrl', url);
+	});
+
+	document.getElementById('clearPdf').addEventListener('click', () => {
+		document.getElementById('pdfInput').value = '';
+		document.getElementById('pdfName').textContent = '-';
+		document.getElementById('pdfSize').textContent = '-';
+		const viewer = document.getElementById('pdfViewer');
+		viewer.style.display = 'none';
+		viewer.innerHTML = '';
+		localStorage.removeItem('labPdfName');
+		localStorage.removeItem('labPdfSize');
+		localStorage.removeItem('labPdfUrl');
+	});
+
+	// Load last uploaded (if any)
+	(function initPdf(){
+		const name = localStorage.getItem('labPdfName');
+		const size = localStorage.getItem('labPdfSize');
+		const url = localStorage.getItem('labPdfUrl');
+		if (name && url) {
+			document.getElementById('pdfName').textContent = name;
+			document.getElementById('pdfSize').textContent = size ? (Number(size)/1024/1024).toFixed(2)+' MB' : '-';
+			const viewer = document.getElementById('pdfViewer');
+			viewer.style.display = 'block';
+			viewer.innerHTML = `<iframe title=\"pdf\" src=\"${url}#view=FitH\" width=\"100%\" height=\"100%\" style=\"border:0\"></iframe>`;
+		}
+	})();
+	</script>
 	</div>
 </body>
 </html> 
